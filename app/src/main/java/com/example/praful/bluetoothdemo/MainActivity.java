@@ -109,6 +109,8 @@ public class MainActivity extends ActionBarActivity {
         String stInfo = "Name: "+bluetoothAdapter.getName() + "\n" +
                 "MAC Address: "+bluetoothAdapter.getAddress();
         textInfo.setText(stInfo);
+
+
     }
 
     @Override
@@ -257,7 +259,7 @@ public class MainActivity extends ActionBarActivity {
 
                 startThreadConnected(bluetoothSocket);
             }else{
-                //fail
+                Toast.makeText(MainActivity.this, "Bluetooth Connection Lost", Toast.LENGTH_SHORT).show();
             }
         }
 
@@ -281,8 +283,8 @@ public class MainActivity extends ActionBarActivity {
     /*
     ThreadConnected:
     Background Thread to handle Bluetooth data communication
-    after connected
-     */
+    after connected*/
+
     private class ThreadConnected extends Thread {
         private final BluetoothSocket connectedBluetoothSocket;
         private final InputStream connectedInputStream;
@@ -313,9 +315,12 @@ public class MainActivity extends ActionBarActivity {
             while (true) {
                 try {
 
-                    ////bytes = connectedInputStream.read(buffer);
-                    int bytes1 =connectedInputStream.read(buffer,0,6);
+                    //bytes = connectedInputStream.read(buffer);
+
+                    byte bytes1 = (byte) connectedInputStream.read(buffer,0,6);
                     strReceived = new String(buffer, 0, bytes1);
+
+                    textViewBytes.setText(strReceived);
                     //final String strReceived = new String(buffer, 0, bytes);
 
                     final String msgReceived = String.valueOf(bytes1) +
@@ -325,30 +330,34 @@ public class MainActivity extends ActionBarActivity {
                     Log.d("MainActivity:: ","Values: "+strReceived);
 
 
+
                     runOnUiThread(new Runnable(){
 
                         @Override
                         public void run() {
                             textStatus.setText(msgReceived);
 
-                            textViewBytes.setText(strReceived);
-
-                            if(msgReceived.length() > 50){
+                            if(strReceived.length() > 50){
 
                                 Log.d("MainActivity:: ","Values: "+msgReceived);
 
 
-                                tempValue = strReceived.substring(0,1);
+                                //Setting text to temp,ldr,gas
                                 temp.setText(strReceived.substring(0,1));
+                                ldr.setText("LDR: "+ strReceived.substring(5,5));
+                                gas.setText("Gas Sensor: "+ strReceived.substring(2,4));
+
+                                tempValue = strReceived.substring(0,1);
+
                                 Log.d("MainActivity:: ","Temperature: "+msgReceived);
 
-                                ldrValue = strReceived.substring(2,4);
+                                ldrValue = strReceived.substring(5,5);
 
-                                ldr.setText("LDR: "+ strReceived.substring(5,5));
+
                                 Log.d("MainActivity:: ","ldr: "+ strReceived.substring(2,4));
 
-                                gasValue = strReceived.substring(5,5);
-                                gas.setText("Gas Sensor: "+ strReceived.substring(2,4));
+                                gasValue = strReceived.substring(2,4);
+
                                 Log.d("MainActivity:: ","Gas Sensor:: "+ strReceived.substring(5,5));
 
 
@@ -358,7 +367,7 @@ public class MainActivity extends ActionBarActivity {
                                 SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                                 String formattedDate = df.format(c.getTime());
 
-                                ValueDetails valueDetails = new ValueDetails(tempValue,ldrValue,gasValue, formattedDate);
+                                ValueDetails valueDetails = new ValueDetails(tempValue,gasValue,ldrValue, formattedDate);
                                 new AsyncInsertValues().execute(valueDetails);
 
                             }
